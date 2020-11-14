@@ -2,6 +2,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://blog.codingcat.net/about/index.html</loc>
+    
+    <lastmod>2020-11-14</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.codingcat.net/writing/Django%20uwsgi+nginx%E7%94%9F%E4%BA%A7%E9%83%A8%E7%BD%B2.html</loc>
+    
+    <lastmod>2020-11-02</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.codingcat.net/writing/Linux%E4%B8%8B%E5%AE%89%E8%A3%85Python%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83.html</loc>
+    
+    <lastmod>2020-10-31</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://blog.codingcat.net/20201023/MySQL%E5%BF%98%E8%AE%B0root%E5%AF%86%E7%A0%81%E6%80%8E%E4%B9%88%E5%8A%9E/</loc>
     
     <lastmod>2020-10-24</lastmod>
@@ -24,13 +45,6 @@
   
   <url>
     <loc>http://blog.codingcat.net/categories/index.html</loc>
-    
-    <lastmod>2020-10-13</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://blog.codingcat.net/about/index.html</loc>
     
     <lastmod>2020-10-13</lastmod>
     
@@ -60,7 +74,7 @@
 
   <url>
     <loc>http://blog.codingcat.net/</loc>
-    <lastmod>2020-10-24</lastmod>
+    <lastmod>2020-11-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -68,14 +82,14 @@
   
   <url>
     <loc>http://blog.codingcat.net/tags/MySQL/</loc>
-    <lastmod>2020-10-24</lastmod>
+    <lastmod>2020-11-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://blog.codingcat.net/tags/Oracle/</loc>
-    <lastmod>2020-10-24</lastmod>
+    <lastmod>2020-11-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -84,14 +98,14 @@
   
   <url>
     <loc>http://blog.codingcat.net/categories/%E6%95%B0%E6%8D%AE%E5%BA%93-MySQL/</loc>
-    <lastmod>2020-10-24</lastmod>
+    <lastmod>2020-11-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>http://blog.codingcat.net/categories/%E6%95%B0%E6%8D%AE%E5%BA%93-Oracle/</loc>
-    <lastmod>2020-10-24</lastmod>
+    <lastmod>2020-11-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
