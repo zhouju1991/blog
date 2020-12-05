@@ -193,4 +193,94 @@
         <tag>MySQL</tag>
       </tags>
   </entry>
+  <entry>
+    <title></title>
+    <url>/20201205/SQL%E6%B3%A8%E5%85%A5%E4%BB%8B%E7%BB%8D%E5%8F%8A%E9%A2%84%E9%98%B2/</url>
+    <content><![CDATA[<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">title: SQL注入介绍及预防</span><br><span class="line">category: 数据库</span><br><span class="line">	- MySQL</span><br><span class="line">tags:</span><br><span class="line">	- MySQL</span><br><span class="line">	- SQL注入</span><br><span class="line">date: 2020-12-5</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="SQL注入介绍"><a href="#SQL注入介绍" class="headerlink" title="SQL注入介绍"></a>SQL注入介绍</h2><p>在Web程序中，一般都会有后台根据用户输入内容查找或者执行相关动作的场景，如登录时查询用户是否存在。后台在处理的时候可能是根据用户输入的用户名，拼接SQL之后到数据库查询来判断，这时，如果用户恶意输入不正确内容或内容本身存在问题，会导致应用程序崩溃，甚至是丢失数据等导致相关损失。即通过把SQL命令插入到Web表单提交或输入域名或页面请求的查询字符串，最终达到欺骗服务器执行恶意的SQL命令。这种场景就称为SQL注入。</p>
+<p>SQL 注入攻击是通过将恶意的SQL语句如添加、删除等插入到应用的输入参数中，经过后台解析后发送到数据库服务器上解析执行进行的攻击。本文以mysql为例，讨论SQL注入以及在Django中如何防止SQL注入。</p>
+<h3 id="一个SQL注入的简单例子"><a href="#一个SQL注入的简单例子" class="headerlink" title="一个SQL注入的简单例子"></a>一个SQL注入的简单例子</h3><p>如执行一条SQL语句:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">select * </span><br><span class="line">  from tb_user </span><br><span class="line"> where username &#x3D; &#39;jacobzhou&#39;;</span><br></pre></td></tr></table></figure>
+
+<p>其中jacobzhou是用户输入的值，此时可以得到正确的值：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">mysql&gt; select * </span><br><span class="line">    -&gt;   from tb_user </span><br><span class="line">    -&gt;  where username &#x3D; &#39;jacobzhou&#39;;</span><br><span class="line">+------+-----------+----------+------+</span><br><span class="line">| id   | username  | password | age  |</span><br><span class="line">+------+-----------+----------+------+</span><br><span class="line">|    1 | jacobzhou | 123456   |   29 |</span><br><span class="line">+------+-----------+----------+------+</span><br><span class="line">1 row in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>但是，当用户输入错误的值，如jacobzhou’;drop table  tb_test;，如果使用的是字符串拼接的方式去执行，SQL语句就变成了：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">select * </span><br><span class="line">  from tb_user </span><br><span class="line"> where username &#x3D; &#39;jacobzhou&#39;;drop table tb_test;&#39;;</span><br></pre></td></tr></table></figure>
+
+<p>执行结果为：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">mysql&gt; select * </span><br><span class="line">    -&gt;   from tb_user </span><br><span class="line">    -&gt;  where username &#x3D; &#39;jacobzhou&#39;;drop table tb_test;&#39;;</span><br><span class="line">+------+-----------+----------+------+</span><br><span class="line">| id   | username  | password | age  |</span><br><span class="line">+------+-----------+----------+------+</span><br><span class="line">|    1 | jacobzhou | 123456   |   29 |</span><br><span class="line">+------+-----------+----------+------+</span><br><span class="line">1 row in set (0.00 sec)</span><br><span class="line"></span><br><span class="line">ERROR 1051 (42S02): Unknown table &#39;db-platform.tb_test&#39;</span><br><span class="line">    &#39;&gt; </span><br></pre></td></tr></table></figure>
+
+<p>以上就是一个SQL注入的例子，可以看到，如果db-platform.tb_test表存在，那就会被恶意删除。例子相对较极端，对于Django自带的connection来说，使用execute函数执行SQL语句的时候，每次只执行一条语句，后一条语句不会执行。因此上面的例子在Django中是不成立的，但是足以说明SQL注入所带来的安全风险。那SQL注入都有哪些方式，如何才能防止SQL注入呢？</p>
+<h2 id="SQL注入原理"><a href="#SQL注入原理" class="headerlink" title="SQL注入原理"></a>SQL注入原理</h2><p>Web应用程序对于用户输入的数据和合法性没有严谨的判断，前端用户的输入直接传输给后端，攻击者通过构造不同的参数，形成不同的SQL语句来实现对数据库的任意操作。<br>SQL注入产生需要满足两个条件：</p>
+<ul>
+<li>参数用户可控：前端传给后端的参数内容是用户可以控制的</li>
+<li>参数带入数据库查询：传入的参数直接拼接到SQL语句，且带入数据库查询</li>
+</ul>
+<h2 id="SQL注入类型"><a href="#SQL注入类型" class="headerlink" title="SQL注入类型"></a>SQL注入类型</h2><p>SQL注入的分类有很多，如POST注入、Cookie注入、延时注入、搜索注入等，但是归根结底也是数字型和字符型注入的不同展现形式或者是注入的位置不同。</p>
+<h3 id="数字型"><a href="#数字型" class="headerlink" title="数字型"></a>数字型</h3><p>用户输入为整数，假设SQL语句为：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">select * from home_application_database where id &#x3D; 3; </span><br></pre></td></tr></table></figure>
+
+<p>其中3为数字，是用户正常输入。</p>
+<p>当满足如下条件，则可能存在数字型注入：</p>
+<ul>
+<li>输入3’ 页面报错（SQL语法错误）</li>
+<li>输入3 and 1 = 1 页面正常返回结果</li>
+<li>输入3 and 1=2 页面返回错误（SQL语句返回空数据）</li>
+</ul>
+<p>如果后台使用的是<code>select * from home_application_database where id = </code>和未经验证的用户输入做拼接后去数据库查询，就满足了上面的三个条件，存在数字型注入。</p>
+<p>这里可以看到用户输入必须是整数，后端验证用户输入必须是整数才会继续执行即可解决。</p>
+<h3 id="字符型"><a href="#字符型" class="headerlink" title="字符型"></a>字符型</h3><p>用户输入是字符串，如SQL语句：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">select * from home_application_database where name &#x3D; &#39;154&#39;</span><br></pre></td></tr></table></figure>
+
+<p>其中154是字符串，是用户正常输入。</p>
+<p>当满足如下条件时，则可能存在字符型注入：</p>
+<ul>
+<li>输入154’，页面异常（SQL语句语法错误）</li>
+<li>输入154’ and 1 = 1 – ，页面正常返回</li>
+<li>输入154’ and 1 = 2 – ，页面错误（查询结果为空）</li>
+</ul>
+<p>同数字型，如果后台直接使用拼接语句的形式去数据库执行，则就满足了上面单个条件，存在字符型注入。攻击者使用单引号的方式提前结束前一个单引号，并使用and来添加其他操作。</p>
+<h2 id="如何防止SQL注入"><a href="#如何防止SQL注入" class="headerlink" title="如何防止SQL注入"></a>如何防止SQL注入</h2><p>在开发时应该秉持一种<strong>外部参数皆不可信</strong>的原则来进行开发。</p>
+<ul>
+<li><p>加强参数验证</p>
+<p>开发时，验证所有来自前端的输入，必须是符合要求的数据类型，符合指定规则的数据才允许继续往下执行。</p>
+</li>
+<li><p>SQL语句参数化处理</p>
+<p>减少使用或不使用字符串拼接的方式执行SQL，而是将用户输入当着参数传给执行SQL的方法，如Django中的cursor.execute()函数就支持在SQL语句中使用占位符，将输入作为参数传递给方法执行。</p>
+</li>
+<li><p>存储过程</p>
+<p>使用存储过程也可以有效防止SQL注入，不过在存储过程中，需使用占位符，并且使用输入参数来预编译SQL语句后再执行。</p>
+</li>
+</ul>
+<h2 id="Django中防止SQL注入"><a href="#Django中防止SQL注入" class="headerlink" title="Django中防止SQL注入"></a>Django中防止SQL注入</h2><p>Django中使用ORM可以有效防止SQL注入，所以应该尽可能使用ORM。但是ORM对于复杂查询就无能为力了，这时就需要执行原生SQL时，可以使用如下方式：</p>
+<ol>
+<li>使用extra</li>
+<li>使用raw</li>
+<li>使用django.db执行自定义SQL</li>
+<li>直接使用pymysql</li>
+</ol>
+<p>在使用原生SQL语句时，应避免直接使用用户输入拼接SQL语句，上面三种执行原生SQL的方式均提供了占位符来进行参数替换，防止SQL注入。我们比较常用的是3、和4，两种方法都是使用cursor.execue()方法，具体如下：</p>
+<ul>
+<li><p>django.db</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> django.db <span class="keyword">import</span> connection</span><br><span class="line">cursor = connection.cursor()</span><br><span class="line">cursor.execute(sql)</span><br><span class="line">result = cursor.fetchall()</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>pymysql</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">connection = pymysql.connect(**mysql_server)</span><br><span class="line">cursor = connection.cursor()</span><br><span class="line">cursor.execute(sql)</span><br><span class="line">result = cursor.fetchall()</span><br></pre></td></tr></table></figure>
+
+<p>execute中的sql语句使用占位符，并传入相应参数即可防止SQL注入：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sql&#x3D;&quot;select * from home_application_database where id &#x3D; %s&quot; </span><br><span class="line">cursor.execute(sql,3)</span><br><span class="line">1</span><br><span class="line">cursor.execute(sql,&quot;3&#39;&quot;)</span><br><span class="line">1</span><br><span class="line">E:\venv\python2\lib\site-packages\pymysql\cursors.py:297: Warning: Truncated incorrect DOUBLE value: &#39;3&#39;&#39;</span><br><span class="line">  self._do_get_result()</span><br><span class="line">cursor.execute(sql,&quot;3 and 1 &#x3D; 1 &quot;)</span><br><span class="line">E:\venv\python2\lib\site-packages\pymysql\cursors.py:297: Warning: Truncated incorrect DOUBLE value: &#39;3 and 1 &#x3D; 1 &#39;</span><br><span class="line">1</span><br><span class="line">  self._do_get_result()</span><br><span class="line">cursor.execute(sql,&quot;3 and 1 &#x3D; 2 &quot;)</span><br><span class="line">E:\venv\python2\lib\site-packages\pymysql\cursors.py:297: Warning: Truncated incorrect DOUBLE value: &#39;3 and 1 &#x3D; 2 &#39;</span><br><span class="line">  self._do_get_result()</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<p>从上面执行结果看出，对于整数型注入，使用execute中带参数执行的方式，并不满足注入条件，当使用3’，3 and 1 = 1 ，3 and 1 = 2 作为输入传给execute执行时，程序报错。</p>
+<p>同理对于字符型注入也一样。</p>
+<blockquote>
+<p>注意：在使用execute函数执行时，SQL语句中的占位符，不管是字符还是整型，都使用%s，且对于字符型的数据，在SQL语句里面不能使用’%s’，否则会报错。使用参数替换本质上是对输入的参数进行转义处理，防止输入中的引号。</p>
+</blockquote>
+</li>
+</ul>
+]]></content>
+  </entry>
 </search>
