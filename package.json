@@ -22,17 +22,6 @@
     "hexo-renderer-marked": "^4.0.0",
     "hexo-renderer-stylus": "^2.0.0",
     "hexo-server": "^2.0.0",
-    "hexo-theme-landscape": "^0.0.3",
-	
-	"@fancyapps/fancybox": "3.5.7",
-    "@fortawesome/fontawesome-free": "5.15.2",
-    "algoliasearch": "4.8.5",
-    "gitalk": "1.7.0",
-    "gitment": "0.0.3",
-    "hexo-util": "2.4.0",
-    "jquery": "3.5.1",
-    "jsdom": "16.4.0",
-    "moment": "2.29.1",
-    "strip-indent": "3.0.0"
+    "hexo-theme-landscape": "^0.0.3"
   }
 }
