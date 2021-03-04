@@ -1,0 +1,629 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="写程序的猫">
+    <title>MySQL性能优化之key_buffer_size - 写程序的猫</title>
+    <meta name="author" content="CodingCat">
+    
+        <meta name="keywords" content="CodingCat,写程序的猫,">
+    
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/"],"image":"portrait.jpg"},"articleBody":"MyISAM表中的索引块在所有线程之间缓存和共享，key_buffer_size用来设置索引块使用的缓冲大小，key buffer也称key cache，key buffer用来缓存MyISAM表经常使用的索引。\n\n\n在32位平台上key_buffer_size最大可设置为4294967295B，即4G，64位平台更大。根据操作系统和硬件平台实际可用的RAM，实际生效的值比设置的值偏小。该值的大小即为MySQL申请的内存大小，内部会为该变量尽可能分配内存以达到该值，实际上分配的可能会偏小。\n该参数大小决定索引处理的速度，尤其是索引读的速度，在只使用MyISAM存储引擎的数据库中，可以将该值设置为机器总内存的25%，不宜设置过大（大于及其总内存的50% ），这样的话系统会频繁切换内存块（MySQL依赖操作系统缓存来缓存数据，因此需要留点空间给操作系统），导致系统变慢，如果有使用其他的存储引擎，也需要将其他存储引擎的内存使用考虑进去。\nkey_buffer_size是个全局参数，只对MyISAM表有作用，因为MySQL中磁盘临时表使用的是MyISAM引擎，因此也需要使用到该值，对于1G内存的机器，如果不使用MyISAM表，推荐值是16M（8-64M）。\n可以通过show status，检查Key_read_requests, Key_reads, Key_write_requests, 以及Key_writes 状态变量的值来检查key buffer的性能，正常情况下，Key_reads/Key_read_requests的值应该小于0.01。Key_reads是从磁盘读取索引块到key cache的次数，Key_read_requests是请求读取索引块的次数，Key_reads较大，即Key_reads/Key_read_requests大于0.01时，可以增加key_buffer_size的值使其小于0.01来提升查询性能。更新多的时候Key_writes/Key_write_requests的值接近1，如果更新影响很多行或者使用DELAY_KEY_WRITE表选项时，Key_writes/Key_write_requests的值会更小。\n通过公式1 - ((Key_blocks_unused * key_cache_block_size) / key_buffer_size)可以计算出索引块使用率，其中Key_blocks_unused 表示未使用的索引块数key_cache_block_size表示索引块大小。\n","dateCreated":"2020-09-23T00:00:00+00:00","dateModified":"2021-03-04T15:22:53+00:00","datePublished":"2020-09-23T00:00:00+00:00","description":"MyISAM表中的索引块在所有线程之间缓存和共享，key_buffer_size用来设置索引块使用的缓冲大小，key buffer也称key cache，key buffer用来缓存MyISAM表经常使用的索引。","headline":"MySQL性能优化之key_buffer_size","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/","keywords":"MySQL"}</script>
+    <meta name="description" content="MyISAM表中的索引块在所有线程之间缓存和共享，key_buffer_size用来设置索引块使用的缓冲大小，key buffer也称key cache，key buffer用来缓存MyISAM表经常使用的索引。">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="MySQL性能优化之key_buffer_size">
+<meta property="og:url" content="http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/index.html">
+<meta property="og:site_name" content="写程序的猫">
+<meta property="og:description" content="MyISAM表中的索引块在所有线程之间缓存和共享，key_buffer_size用来设置索引块使用的缓冲大小，key buffer也称key cache，key buffer用来缓存MyISAM表经常使用的索引。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-09-23T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-03-04T15:22:53.441Z">
+<meta property="article:author" content="CodingCat">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://localhost:4000/assets/images/portrait.jpg"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-zkojf0hyrzlxytjhrpaocunbye0obxb4otkmwihb2kgldphoczsjoowoixe6.min.css">
+
+    <!--STYLES END-->
+    
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            写程序的猫
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-icon st-search-show-outputs"
+                href="#search"
+                aria-label="打开链接: /#search"
+            >
+        
+        
+            <i class="search fa-lg"></i>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/portrait.jpg" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">CodingCat</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>一个有诗意的程序员</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-categories"
+                            
+                            rel="noopener"
+                            title="分类"
+                        >
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">分类</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link open-algolia-search"
+                            href="#search"
+                            
+                            rel="noopener"
+                            title="搜索"
+                        >
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">搜索</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="#about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            MySQL性能优化之key_buffer_size
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2020-09-23T00:00:00+00:00">
+	
+		    9月 23, 2020
+    	
+    </time>
+    
+        <span>发布在 </span>
+        
+    <a class="category-link" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93-MySQL/">数据库 - MySQL</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>MyISAM表中的索引块在所有线程之间缓存和共享，key_buffer_size用来设置索引块使用的缓冲大小，key buffer也称key cache，key buffer用来缓存MyISAM表经常使用的索引。</p>
+<span id="more"></span>
+
+<p>在32位平台上key_buffer_size最大可设置为4294967295B，即4G，64位平台更大。根据操作系统和硬件平台实际可用的RAM，实际生效的值比设置的值偏小。该值的大小即为MySQL申请的内存大小，内部会为该变量尽可能分配内存以达到该值，实际上分配的可能会偏小。</p>
+<p>该参数大小决定索引处理的速度，尤其是索引读的速度，在只使用MyISAM存储引擎的数据库中，可以将该值设置为机器总内存的25%，不宜设置过大（大于及其总内存的50% ），这样的话系统会频繁切换内存块（MySQL依赖操作系统缓存来缓存数据，因此需要留点空间给操作系统），导致系统变慢，如果有使用其他的存储引擎，也需要将其他存储引擎的内存使用考虑进去。</p>
+<p>key_buffer_size是个全局参数，只对MyISAM表有作用，因为MySQL中磁盘临时表使用的是MyISAM引擎，因此也需要使用到该值，对于1G内存的机器，如果不使用MyISAM表，推荐值是16M（8-64M）。</p>
+<p>可以通过show status，检查Key_read_requests, Key_reads, Key_write_requests, 以及Key_writes 状态变量的值来检查key buffer的性能，正常情况下，Key_reads/Key_read_requests的值应该小于0.01。Key_reads是从磁盘读取索引块到key cache的次数，Key_read_requests是请求读取索引块的次数，Key_reads较大，即Key_reads/Key_read_requests大于0.01时，可以增加key_buffer_size的值使其小于0.01来提升查询性能。更新多的时候Key_writes/Key_write_requests的值接近1，如果更新影响很多行或者使用DELAY_KEY_WRITE表选项时，Key_writes/Key_write_requests的值会更小。</p>
+<p>通过公式1 - ((Key_blocks_unused * key_cache_block_size) / key_buffer_size)可以计算出索引块使用率，其中Key_blocks_unused 表示未使用的索引块数key_cache_block_size表示索引块大小。</p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/MySQL/" rel="tag">MySQL</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/09/24/%E5%A6%82%E4%BD%95%E5%8D%87%E7%BA%A7MySQL/"
+                    data-tooltip="如何升级MySQL"
+                    aria-label="上一篇: 如何升级MySQL"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/&amp;title=MySQL性能优化之key_buffer_size"
+                    title="分享到 QQ"
+                    aria-label="分享到 QQ"
+                >
+                    <i class="fab fa-qq" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                    title="分享到 Qzone"
+                    aria-label="分享到 Qzone"
+                >
+                    <i class="fa fa-star" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                    title="分享到 Renren"
+                    aria-label="分享到 Renren"
+                >
+                    <i class="fab fa-renren" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2021 CodingCat. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2020/09/24/%E5%A6%82%E4%BD%95%E5%8D%87%E7%BA%A7MySQL/"
+                    data-tooltip="如何升级MySQL"
+                    aria-label="上一篇: 如何升级MySQL"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/&amp;title=MySQL性能优化之key_buffer_size"
+                    title="分享到 QQ"
+                    aria-label="分享到 QQ"
+                >
+                    <i class="fab fa-qq" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                    title="分享到 Qzone"
+                    aria-label="分享到 Qzone"
+                >
+                    <i class="fa fa-star" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                    title="分享到 Renren"
+                    aria-label="分享到 Renren"
+                >
+                    <i class="fab fa-renren" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://connect.qq.com/widget/shareqq/index.html?url=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/&amp;title=MySQL性能优化之key_buffer_size"
+                        aria-label="分享到 QQ"
+                    >
+                        <i class="fab fa-qq" aria-hidden="true"></i><span>分享到 QQ</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                        aria-label="分享到 Qzone"
+                    >
+                        <i class="fa fa-star" aria-hidden="true"></i><span>分享到 Qzone</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://widget.renren.com/dialog/share?resourceUrl=http://localhost:4000/2020/09/23/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8Bkey_buffer_size/"
+                        aria-label="分享到 Renren"
+                    >
+                        <i class="fab fa-renren" aria-hidden="true"></i><span>分享到 Renren</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/portrait.jpg" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">CodingCat</h4>
+        
+            <div id="about-card-bio"><p>一个有诗意的程序员</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>运维开发工程师</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-udtabruxfngng3bfqdhq8grwculdk7nbagyg4z7tn9bpzaeuto0nvkiqjozl.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+
+    </body>
+</html>
