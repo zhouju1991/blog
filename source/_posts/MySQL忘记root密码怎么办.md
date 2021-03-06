@@ -3,8 +3,7 @@ title: MySQL忘记root密码怎么办
 date: 2020-10-23
 tags:
 	- MySQL
-category: 数据库
-	- MySQL
+category: MySQL
 ---
 
 使用MySQL过程中我们偶尔会遇到忘记密码的情况，怎么办呢？能不能吧密码找回来或者重新设置密码呢？

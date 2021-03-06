@@ -3,8 +3,7 @@ title: MySQL索引介绍
 date: 2020-10-09 15:14:32
 tags:
 	- MySQL
-category: 数据库
-	- MySQL
+category: MySQL
 ---
 
 一般情况下，数据库做了两件事情：存储数据和检索数据。检索数据是数据库中使用最多的一个功能。本篇文主要讨论MySQL数据库中InnoDB存储引擎下的索引的原理和使用。本文主要从以下几个方面展开：

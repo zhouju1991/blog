@@ -1,7 +1,6 @@
 ---
 title: MySQL性能优化之key_buffer_size
-category: 数据库
-	- MySQL
+category: MySQL
 tags:
 - MySQL
 date: 2020-9-23

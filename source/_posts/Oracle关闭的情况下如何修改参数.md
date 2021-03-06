@@ -1,7 +1,6 @@
 ---
 title: Oracle数据库关闭的情况下如何修改参数
-category: 数据库
-	- Oracle
+category: Oracle
 tags:
 	- Oracle
 date: 2020-10-20

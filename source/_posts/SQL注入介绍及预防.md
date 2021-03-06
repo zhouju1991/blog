@@ -1,7 +1,6 @@
 ---
 title: SQL注入介绍
-category: 数据库
-	- MySQL
+category: MySQL
 tags:
 	- MySQL
 	- SQL注入
