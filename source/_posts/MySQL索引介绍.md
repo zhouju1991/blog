@@ -12,6 +12,8 @@ category: MySQL
 
 <!--more-->
 
+<!--toc-->
+
 ## 索引的概念
 
 MySQL官方对索引的解释是这样的，原文如下：

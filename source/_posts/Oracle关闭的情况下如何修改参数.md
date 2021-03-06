@@ -10,6 +10,8 @@ date: 2020-10-20
 
 <!--more-->
 
+<!--toc-->
+
 ## 场景
 
 在Oracle中很多参数在修改的时候都有一定的规定，如在设置快速恢复区时，db_recovery_file_dest和db_recovery_file_dest_size需修改后重启数据库，如果只修改了db_recovery_file_dest，db_recovery_file_dest_size并不设定值，则无法重启数据库，启动时报错如下：
