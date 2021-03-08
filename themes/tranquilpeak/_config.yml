@@ -56,10 +56,6 @@ sidebar:
             title: global.about
             url: "#about"
             icon: fa fa-question
-        MySQL:
-            title: global.mysql
-            url: "/MySQL"
-            icon: fa fa-question
     author_links:
         github:
             title: global.github
