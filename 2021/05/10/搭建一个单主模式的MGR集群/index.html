@@ -1,0 +1,683 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="写程序的猫">
+    <title>搭建一个单主模式的MGR集群 - 写程序的猫</title>
+    <meta name="author" content="CodingCat">
+    
+        <meta name="keywords" content="CodingCat,写程序的猫,">
+    
+    
+    
+        
+            <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
+        
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"搭建一个单主模式的MGR集群\n\n\n\n\n环境说明实验基于MySQL8.0.24版本，操作系统为CentOS7，共三个节点，分别如下：\n\n\n\n主机名\nIP\nPort\nServer Id\n\n\n\ndb156\n192.168.165.156\n3306\n1\n\n\ndb157\n192.168.165.157\n3306\n2\n\n\ndb225\n192.168.165.225\n3306\n3\n\n\n架构如下：\n\n修改hosts配置修改每个服务器的/etc/hosts文件并增加每个服务器的映射：\n123192.168.165.156 db156192.168.165.157 db157192.168.165.225 db225\n\n部署MySQL实例不做赘述\n第一个节点配置修改my.cnf文件并重启MySQL服务\n在mysqld下增加如下配置：\n1234567891011121314151617disabled_storage_engines&#x3D;&quot;MyISAM,BLACKHOLE,FEDERATED,ARCHIVE,MEMORY&quot;server_id &#x3D; 1gtid_mode&#x3D;ONenforce_gtid_consistency&#x3D;ONbinlog_checksum&#x3D;NONElog_bin &#x3D; &#x2F;data&#x2F;mysql&#x2F;logs&#x2F;mysql-binlog_slave_updates&#x3D;ONbinlog_format&#x3D;ROWmaster_info_repository&#x3D;TABLErelay_log_info_repository&#x3D;TABLEtransaction_write_set_extraction&#x3D;XXHASH64plugin_load_add&#x3D;&#39;group_replication.so&#39;group_replication_group_name&#x3D;&quot;1eab024d-afdd-11eb-a2d1-005056a0bb1a&quot;group_replication_start_on_boot&#x3D;offgroup_replication_local_address&#x3D; &quot;192.168.165.156:33061&quot;group_replication_group_seeds&#x3D; &quot;192.168.165.156:33061,192.168.165.157:33061,192.168.165.225:33061&quot;group_replication_bootstrap_group&#x3D;off\n\n重启MySQL服务后执行如下操作：\n1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465[root@db156 ~]# mysqlWelcome to the MySQL monitor.  Commands end with ; or \\g.Your MySQL connection id is 8Server version: 8.0.24 MySQL Community Server - GPLCopyright (c) 2000, 2021, Oracle and&#x2F;or its affiliates.Oracle is a registered trademark of Oracle Corporation and&#x2F;or itsaffiliates. Other names may be trademarks of their respectiveowners.Type &#39;help;&#39; or &#39;\\h&#39; for help. Type &#39;\\c&#39; to clear the current input statement.mysql&gt; SET SQL_LOG_BIN&#x3D;0;Query OK, 0 rows affected (0.00 sec)mysql&gt; CREATE USER repl@&#39;%&#39; IDENTIFIED BY &#39;123456&#39;;Query OK, 0 rows affected (0.02 sec)mysql&gt; GRANT REPLICATION SLAVE ON *.* TO repl@&#39;%&#39;;Query OK, 0 rows affected (0.00 sec)mysql&gt; GRANT BACKUP_ADMIN ON *.* TO repl@&#39;%&#39;;Query OK, 0 rows affected (0.00 sec)mysql&gt; FLUSH PRIVILEGES;Query OK, 0 rows affected (0.00 sec)mysql&gt; SET SQL_LOG_BIN&#x3D;1;Query OK, 0 rows affected (0.00 sec)mysql&gt; CHANGE REPLICATION SOURCE TO SOURCE_USER&#x3D;&#39;repl&#39;, SOURCE_PASSWORD&#x3D;&#39;123456&#39; FOR CHANNEL &#39;group_replication_recovery&#39;;Query OK, 0 rows affected, 2 warnings (0.02 sec)mysql&gt; SET GLOBAL group_replication_bootstrap_group&#x3D;ON;Query OK, 0 rows affected (0.00 sec)mysql&gt; START GROUP_REPLICATION USER&#x3D;&#39;repl&#39;, PASSWORD&#x3D;&#39;123456&#39;;Query OK, 0 rows affected (2.24 sec)mysql&gt; SET GLOBAL group_replication_bootstrap_group&#x3D;OFF;Query OK, 0 rows affected (0.00 sec)mysql&gt; SELECT * FROM performance_schema.replication_group_members;+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE | MEMBER_ROLE | MEMBER_VERSION |+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+| group_replication_applier | 9b4c6994-afd5-11eb-beab-005056a0bb1a | db156       |        3306 | ONLINE       | PRIMARY     | 8.0.24         |+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+1 row in set (0.00 sec)# 创建测试库mysql&gt; CREATE DATABASE test;Query OK, 1 row affected (0.00 sec)mysql&gt; USE test;Database changedmysql&gt; CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 TEXT NOT NULL);Query OK, 0 rows affected (0.01 sec)mysql&gt; INSERT INTO t1 VALUES (1, &#39;Luis&#39;);Query OK, 1 row affected (0.01 sec)mysql&gt; \n\n第二个节点配置将第一个节点的配置文件复制到第二个节点并修改server-id和group_replication_local_address即可\n12345678910111213141516server_id &#x3D; 2binlog_format &#x3D; ROWdisabled_storage_engines&#x3D;&quot;MyISAM,BLACKHOLE,FEDERATED,ARCHIVE,MEMORY&quot;gtid_mode&#x3D;ONenforce_gtid_consistency&#x3D;ONbinlog_checksum&#x3D;NONElog_slave_updates&#x3D;ONmaster_info_repository&#x3D;TABLErelay_log_info_repository&#x3D;TABLEtransaction_write_set_extraction&#x3D;XXHASH64plugin_load_add&#x3D;&#39;group_replication.so&#39;group_replication_group_name&#x3D;&quot;1eab024d-afdd-11eb-a2d1-005056a0bb1a&quot;group_replication_start_on_boot&#x3D;offgroup_replication_local_address&#x3D; &quot;192.168.165.157:33061&quot;group_replication_group_seeds&#x3D; &quot;192.168.165.156:33061,192.168.165.157:33061,192.168.165.225:33061&quot;group_replication_bootstrap_group&#x3D;off\n\n重启后执行如下操作，注意和第一个节点的区别：\n1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556[root@db157 ~]# mysqlWelcome to the MySQL monitor.  Commands end with ; or \\g.Your MySQL connection id is 8Server version: 8.0.24 MySQL Community Server - GPLCopyright (c) 2000, 2021, Oracle and&#x2F;or its affiliates.Oracle is a registered trademark of Oracle Corporation and&#x2F;or itsaffiliates. Other names may be trademarks of their respectiveowners.Type &#39;help;&#39; or &#39;\\h&#39; for help. Type &#39;\\c&#39; to clear the current input statement.mysql&gt; SET SQL_LOG_BIN&#x3D;0;Query OK, 0 rows affected (0.00 sec)mysql&gt; CREATE USER repl@&#39;%&#39; IDENTIFIED BY &#39;123456&#39;;Query OK, 0 rows affected (0.03 sec)mysql&gt; GRANT REPLICATION SLAVE ON *.* TO repl@&#39;%&#39;;Query OK, 0 rows affected (0.00 sec)mysql&gt; GRANT BACKUP_ADMIN ON *.* TO repl@&#39;%&#39;;Query OK, 0 rows affected (0.01 sec)mysql&gt; FLUSH PRIVILEGES;Query OK, 0 rows affected (0.00 sec)mysql&gt; SET SQL_LOG_BIN&#x3D;1;Query OK, 0 rows affected (0.00 sec)mysql&gt; CHANGE REPLICATION SOURCE TO SOURCE_USER&#x3D;&#39;repl&#39;, SOURCE_PASSWORD&#x3D;&#39;123456&#39; FOR CHANNEL &#39;group_replication_recovery&#39;;Query OK, 0 rows affected, 2 warnings (0.01 sec)mysql&gt; START GROUP_REPLICATION USER&#x3D;&#39;repl&#39;, PASSWORD&#x3D;&#39;123456&#39;;Query OK, 0 rows affected (3.11 sec)mysql&gt; SELECT * FROM performance_schema.replication_group_members;+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE | MEMBER_ROLE | MEMBER_VERSION |+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+| group_replication_applier | 89999650-afd6-11eb-893e-005056a0d28b | db157       |        3306 | RECOVERING   | SECONDARY   | 8.0.24         || group_replication_applier | 9b4c6994-afd5-11eb-beab-005056a0bb1a | db156       |        3306 | ONLINE       | PRIMARY     | 8.0.24         |+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+2 rows in set (0.01 sec)mysql&gt; SELECT * FROM performance_schema.replication_group_members;+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE | MEMBER_ROLE | MEMBER_VERSION |+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+| group_replication_applier | 89999650-afd6-11eb-893e-005056a0d28b | db157       |        3306 | ONLINE       | SECONDARY   | 8.0.24         || group_replication_applier | 9b4c6994-afd5-11eb-beab-005056a0bb1a | db156       |        3306 | ONLINE       | PRIMARY     | 8.0.24         |+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+2 rows in set (0.00 sec)mysql&gt; \n\n\n\n第三个节点配置与第二个节点相同\n","dateCreated":"2021-05-10T10:55:23+00:00","dateModified":"2021-05-10T03:14:17+00:00","datePublished":"2021-05-10T10:55:23+00:00","description":"搭建一个单主模式的MGR集群","headline":"搭建一个单主模式的MGR集群","image":["1605722404.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/","keywords":"MySQL, 组复制","thumbnailUrl":"1605722404.jpg"}</script>
+    <meta name="description" content="搭建一个单主模式的MGR集群">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="搭建一个单主模式的MGR集群">
+<meta property="og:url" content="http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/index.html">
+<meta property="og:site_name" content="写程序的猫">
+<meta property="og:description" content="搭建一个单主模式的MGR集群">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/%E5%8D%95%E8%8A%82%E7%82%B9%E5%8D%95%E4%B8%BB%E7%BB%84%E5%A4%8D%E5%88%B6%E6%9E%B6%E6%9E%84.png">
+<meta property="article:published_time" content="2021-05-10T10:55:23.000Z">
+<meta property="article:modified_time" content="2021-05-10T03:14:17.432Z">
+<meta property="article:author" content="CodingCat">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="组复制">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/%E5%8D%95%E8%8A%82%E7%82%B9%E5%8D%95%E4%B8%BB%E7%BB%84%E5%A4%8D%E5%88%B6%E6%9E%B6%E6%9E%84.png">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="http://blog.codingcat.net/assets/images/portrait.jpg"/>
+    
+    
+        <meta property="og:image" content="http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/1605722404.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/1605722404.jpg"/>
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="/assets/css/style-rwonvcuijbyxpzri4mxqdw1rxowcv39ob4x8jqjgx0dxo5gvgeh2tipaj1qh.min.css">
+
+    <!--STYLES END-->
+    
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/"
+            aria-label=""
+        >
+            写程序的猫
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-icon st-search-show-outputs"
+                href="#search"
+                aria-label="打开链接: /#search"
+            >
+        
+        
+            <i class="search fa-lg"></i>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+
+        
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="/#about"
+                    aria-label="阅读有关作者的更多信息"
+                >
+                    <img class="sidebar-profile-picture" src="/assets/images/portrait.jpg" alt="作者的图片"/>
+                </a>
+                <h4 class="sidebar-profile-name">CodingCat</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>一个有诗意的程序员</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/"
+                            
+                            rel="noopener"
+                            title="首页"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">首页</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-categories"
+                            
+                            rel="noopener"
+                            title="分类"
+                        >
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">分类</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-tags"
+                            
+                            rel="noopener"
+                            title="标签"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">标签</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="/all-archives"
+                            
+                            rel="noopener"
+                            title="归档"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">归档</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link open-algolia-search"
+                            href="#search"
+                            
+                            rel="noopener"
+                            title="搜索"
+                        >
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">搜索</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="#about"
+                            
+                            rel="noopener"
+                            title="关于"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">关于</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="https://github.com/zhouju1991"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaOut
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            搭建一个单主模式的MGR集群
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-05-10T10:55:23+00:00">
+	
+		    5月 10, 2021
+    	
+    </time>
+    
+        <span>发布在 </span>
+        
+    <a class="category-link" href="/categories/MySQL/">MySQL</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>搭建一个单主模式的MGR集群</p>
+<span id="more"></span>
+
+<h1 id="table-of-contents">目录</h1><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E8%AF%B4%E6%98%8E"><span class="toc-text">环境说明</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9hosts%E9%85%8D%E7%BD%AE"><span class="toc-text">修改hosts配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2MySQL%E5%AE%9E%E4%BE%8B"><span class="toc-text">部署MySQL实例</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E4%B8%AA%E8%8A%82%E7%82%B9%E9%85%8D%E7%BD%AE"><span class="toc-text">第一个节点配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E4%B8%AA%E8%8A%82%E7%82%B9%E9%85%8D%E7%BD%AE"><span class="toc-text">第二个节点配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E4%B8%AA%E8%8A%82%E7%82%B9%E9%85%8D%E7%BD%AE"><span class="toc-text">第三个节点配置</span></a></li></ol>
+
+<h1 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h1><p>实验基于MySQL8.0.24版本，操作系统为CentOS7，共三个节点，分别如下：</p>
+<table>
+<thead>
+<tr>
+<th>主机名</th>
+<th>IP</th>
+<th>Port</th>
+<th>Server Id</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>db156</td>
+<td>192.168.165.156</td>
+<td>3306</td>
+<td>1</td>
+</tr>
+<tr>
+<td>db157</td>
+<td>192.168.165.157</td>
+<td>3306</td>
+<td>2</td>
+</tr>
+<tr>
+<td>db225</td>
+<td>192.168.165.225</td>
+<td>3306</td>
+<td>3</td>
+</tr>
+</tbody></table>
+<p>架构如下：</p>
+<p><img src="%E5%8D%95%E8%8A%82%E7%82%B9%E5%8D%95%E4%B8%BB%E7%BB%84%E5%A4%8D%E5%88%B6%E6%9E%B6%E6%9E%84.png" alt="单节点单主组复制架构"></p>
+<h1 id="修改hosts配置"><a href="#修改hosts配置" class="headerlink" title="修改hosts配置"></a>修改hosts配置</h1><p>修改每个服务器的/etc/hosts文件并增加每个服务器的映射：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">192.168.165.156 db156</span><br><span class="line">192.168.165.157 db157</span><br><span class="line">192.168.165.225 db225</span><br></pre></td></tr></table></figure>
+
+<h1 id="部署MySQL实例"><a href="#部署MySQL实例" class="headerlink" title="部署MySQL实例"></a>部署MySQL实例</h1><p>不做赘述</p>
+<h1 id="第一个节点配置"><a href="#第一个节点配置" class="headerlink" title="第一个节点配置"></a>第一个节点配置</h1><p>修改my.cnf文件并重启MySQL服务</p>
+<p>在mysqld下增加如下配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">disabled_storage_engines&#x3D;&quot;MyISAM,BLACKHOLE,FEDERATED,ARCHIVE,MEMORY&quot;</span><br><span class="line">server_id &#x3D; 1</span><br><span class="line">gtid_mode&#x3D;ON</span><br><span class="line">enforce_gtid_consistency&#x3D;ON</span><br><span class="line">binlog_checksum&#x3D;NONE</span><br><span class="line">log_bin &#x3D; &#x2F;data&#x2F;mysql&#x2F;logs&#x2F;mysql-bin</span><br><span class="line">log_slave_updates&#x3D;ON</span><br><span class="line">binlog_format&#x3D;ROW</span><br><span class="line">master_info_repository&#x3D;TABLE</span><br><span class="line">relay_log_info_repository&#x3D;TABLE</span><br><span class="line">transaction_write_set_extraction&#x3D;XXHASH64</span><br><span class="line">plugin_load_add&#x3D;&#39;group_replication.so&#39;</span><br><span class="line">group_replication_group_name&#x3D;&quot;1eab024d-afdd-11eb-a2d1-005056a0bb1a&quot;</span><br><span class="line">group_replication_start_on_boot&#x3D;off</span><br><span class="line">group_replication_local_address&#x3D; &quot;192.168.165.156:33061&quot;</span><br><span class="line">group_replication_group_seeds&#x3D; &quot;192.168.165.156:33061,192.168.165.157:33061,192.168.165.225:33061&quot;</span><br><span class="line">group_replication_bootstrap_group&#x3D;off</span><br></pre></td></tr></table></figure>
+
+<p>重启MySQL服务后执行如下操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">[root@db156 ~]# mysql</span><br><span class="line">Welcome to the MySQL monitor.  Commands end with ; or \g.</span><br><span class="line">Your MySQL connection id is 8</span><br><span class="line">Server version: 8.0.24 MySQL Community Server - GPL</span><br><span class="line"></span><br><span class="line">Copyright (c) 2000, 2021, Oracle and&#x2F;or its affiliates.</span><br><span class="line"></span><br><span class="line">Oracle is a registered trademark of Oracle Corporation and&#x2F;or its</span><br><span class="line">affiliates. Other names may be trademarks of their respective</span><br><span class="line">owners.</span><br><span class="line"></span><br><span class="line">Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the current input statement.</span><br><span class="line"></span><br><span class="line">mysql&gt; SET SQL_LOG_BIN&#x3D;0;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; CREATE USER repl@&#39;%&#39; IDENTIFIED BY &#39;123456&#39;;</span><br><span class="line">Query OK, 0 rows affected (0.02 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; GRANT REPLICATION SLAVE ON *.* TO repl@&#39;%&#39;;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; GRANT BACKUP_ADMIN ON *.* TO repl@&#39;%&#39;;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; FLUSH PRIVILEGES;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; SET SQL_LOG_BIN&#x3D;1;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; CHANGE REPLICATION SOURCE TO SOURCE_USER&#x3D;&#39;repl&#39;, SOURCE_PASSWORD&#x3D;&#39;123456&#39; FOR CHANNEL &#39;group_replication_recovery&#39;;</span><br><span class="line">Query OK, 0 rows affected, 2 warnings (0.02 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; SET GLOBAL group_replication_bootstrap_group&#x3D;ON;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; START GROUP_REPLICATION USER&#x3D;&#39;repl&#39;, PASSWORD&#x3D;&#39;123456&#39;;</span><br><span class="line">Query OK, 0 rows affected (2.24 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; SET GLOBAL group_replication_bootstrap_group&#x3D;OFF;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; SELECT * FROM performance_schema.replication_group_members;</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE | MEMBER_ROLE | MEMBER_VERSION |</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">| group_replication_applier | 9b4c6994-afd5-11eb-beab-005056a0bb1a | db156       |        3306 | ONLINE       | PRIMARY     | 8.0.24         |</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">1 row in set (0.00 sec)</span><br><span class="line"></span><br><span class="line"># 创建测试库</span><br><span class="line">mysql&gt; CREATE DATABASE test;</span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; USE test;</span><br><span class="line">Database changed</span><br><span class="line">mysql&gt; CREATE TABLE t1 (c1 INT PRIMARY KEY, c2 TEXT NOT NULL);</span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; INSERT INTO t1 VALUES (1, &#39;Luis&#39;);</span><br><span class="line">Query OK, 1 row affected (0.01 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="第二个节点配置"><a href="#第二个节点配置" class="headerlink" title="第二个节点配置"></a>第二个节点配置</h1><p>将第一个节点的配置文件复制到第二个节点并修改server-id和group_replication_local_address即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">server_id &#x3D; 2</span><br><span class="line">binlog_format &#x3D; ROW</span><br><span class="line">disabled_storage_engines&#x3D;&quot;MyISAM,BLACKHOLE,FEDERATED,ARCHIVE,MEMORY&quot;</span><br><span class="line">gtid_mode&#x3D;ON</span><br><span class="line">enforce_gtid_consistency&#x3D;ON</span><br><span class="line">binlog_checksum&#x3D;NONE</span><br><span class="line">log_slave_updates&#x3D;ON</span><br><span class="line">master_info_repository&#x3D;TABLE</span><br><span class="line">relay_log_info_repository&#x3D;TABLE</span><br><span class="line">transaction_write_set_extraction&#x3D;XXHASH64</span><br><span class="line">plugin_load_add&#x3D;&#39;group_replication.so&#39;</span><br><span class="line">group_replication_group_name&#x3D;&quot;1eab024d-afdd-11eb-a2d1-005056a0bb1a&quot;</span><br><span class="line">group_replication_start_on_boot&#x3D;off</span><br><span class="line">group_replication_local_address&#x3D; &quot;192.168.165.157:33061&quot;</span><br><span class="line">group_replication_group_seeds&#x3D; &quot;192.168.165.156:33061,192.168.165.157:33061,192.168.165.225:33061&quot;</span><br><span class="line">group_replication_bootstrap_group&#x3D;off</span><br></pre></td></tr></table></figure>
+
+<p>重启后执行如下操作，注意和第一个节点的区别：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">[root@db157 ~]# mysql</span><br><span class="line">Welcome to the MySQL monitor.  Commands end with ; or \g.</span><br><span class="line">Your MySQL connection id is 8</span><br><span class="line">Server version: 8.0.24 MySQL Community Server - GPL</span><br><span class="line"></span><br><span class="line">Copyright (c) 2000, 2021, Oracle and&#x2F;or its affiliates.</span><br><span class="line"></span><br><span class="line">Oracle is a registered trademark of Oracle Corporation and&#x2F;or its</span><br><span class="line">affiliates. Other names may be trademarks of their respective</span><br><span class="line">owners.</span><br><span class="line"></span><br><span class="line">Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the current input statement.</span><br><span class="line"></span><br><span class="line">mysql&gt; SET SQL_LOG_BIN&#x3D;0;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; CREATE USER repl@&#39;%&#39; IDENTIFIED BY &#39;123456&#39;;</span><br><span class="line">Query OK, 0 rows affected (0.03 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; GRANT REPLICATION SLAVE ON *.* TO repl@&#39;%&#39;;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; GRANT BACKUP_ADMIN ON *.* TO repl@&#39;%&#39;;</span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; FLUSH PRIVILEGES;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; SET SQL_LOG_BIN&#x3D;1;</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; CHANGE REPLICATION SOURCE TO SOURCE_USER&#x3D;&#39;repl&#39;, SOURCE_PASSWORD&#x3D;&#39;123456&#39; FOR CHANNEL &#39;group_replication_recovery&#39;;</span><br><span class="line">Query OK, 0 rows affected, 2 warnings (0.01 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; START GROUP_REPLICATION USER&#x3D;&#39;repl&#39;, PASSWORD&#x3D;&#39;123456&#39;;</span><br><span class="line">Query OK, 0 rows affected (3.11 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; SELECT * FROM performance_schema.replication_group_members;</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE | MEMBER_ROLE | MEMBER_VERSION |</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">| group_replication_applier | 89999650-afd6-11eb-893e-005056a0d28b | db157       |        3306 | RECOVERING   | SECONDARY   | 8.0.24         |</span><br><span class="line">| group_replication_applier | 9b4c6994-afd5-11eb-beab-005056a0bb1a | db156       |        3306 | ONLINE       | PRIMARY     | 8.0.24         |</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">2 rows in set (0.01 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; SELECT * FROM performance_schema.replication_group_members;</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">| CHANNEL_NAME              | MEMBER_ID                            | MEMBER_HOST | MEMBER_PORT | MEMBER_STATE | MEMBER_ROLE | MEMBER_VERSION |</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">| group_replication_applier | 89999650-afd6-11eb-893e-005056a0d28b | db157       |        3306 | ONLINE       | SECONDARY   | 8.0.24         |</span><br><span class="line">| group_replication_applier | 9b4c6994-afd5-11eb-beab-005056a0bb1a | db156       |        3306 | ONLINE       | PRIMARY     | 8.0.24         |</span><br><span class="line">+---------------------------+--------------------------------------+-------------+-------------+--------------+-------------+----------------+</span><br><span class="line">2 rows in set (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; </span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="第三个节点配置"><a href="#第三个节点配置" class="headerlink" title="第三个节点配置"></a>第三个节点配置</h1><p>与第二个节点相同</p>
+
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">标签</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="/tags/MySQL/" rel="tag">MySQL</a> <a class="tag tag--primary tag--small t-none-link" href="/tags/%E7%BB%84%E5%A4%8D%E5%88%B6/" rel="tag">组复制</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/07/MySQL%E7%BB%84%E5%A4%8D%E5%88%B6%E4%BB%8B%E7%BB%8D/"
+                    data-tooltip="MySQL组复制介绍"
+                    aria-label="下一篇: MySQL组复制介绍"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/&amp;title=搭建一个单主模式的MGR集群"
+                    title="分享到 QQ"
+                    aria-label="分享到 QQ"
+                >
+                    <i class="fab fa-qq" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                    title="分享到 Qzone"
+                    aria-label="分享到 Qzone"
+                >
+                    <i class="fa fa-star" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                    title="分享到 Renren"
+                    aria-label="分享到 Renren"
+                >
+                    <i class="fab fa-renren" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2021 CodingCat. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/05/07/MySQL%E7%BB%84%E5%A4%8D%E5%88%B6%E4%BB%8B%E7%BB%8D/"
+                    data-tooltip="MySQL组复制介绍"
+                    aria-label="下一篇: MySQL组复制介绍"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">下一篇</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                    title="分享到 Weibo"
+                    aria-label="分享到 Weibo"
+                >
+                    <i class="fab fa-weibo" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/&amp;title=搭建一个单主模式的MGR集群"
+                    title="分享到 QQ"
+                    aria-label="分享到 QQ"
+                >
+                    <i class="fab fa-qq" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                    title="分享到 Qzone"
+                    aria-label="分享到 Qzone"
+                >
+                    <i class="fa fa-star" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                    title="分享到 Renren"
+                    aria-label="分享到 Renren"
+                >
+                    <i class="fab fa-renren" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#table-of-contents" aria-label="目录">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                        aria-label="分享到 Weibo"
+                    >
+                        <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/&amp;title=搭建一个单主模式的MGR集群"
+                        aria-label="分享到 QQ"
+                    >
+                        <i class="fab fa-qq" aria-hidden="true"></i><span>分享到 QQ</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                        aria-label="分享到 Qzone"
+                    >
+                        <i class="fa fa-star" aria-hidden="true"></i><span>分享到 Qzone</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/05/10/%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E7%9A%84MGR%E9%9B%86%E7%BE%A4/"
+                        aria-label="分享到 Renren"
+                    >
+                        <i class="fab fa-renren" aria-hidden="true"></i><span>分享到 Renren</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+        
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="/assets/images/portrait.jpg" alt="作者的图片"/>
+        
+            <h4 id="about-card-name">CodingCat</h4>
+        
+            <div id="about-card-bio"><p>一个有诗意的程序员</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>运维开发工程师</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="/assets/js/script-jmoyblpzbtn1g5mmriesr4wzlwxlpcnnbbuheqj1uaihmjt0gty3oyj1nkeh.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+
+
+
+
+    </body>
+</html>
