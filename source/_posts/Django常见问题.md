@@ -2,7 +2,7 @@
 title: Django常见问题
 tags:
   - Python
- - Django
+  - Django
 category: Python
 thumbnailImage: bg.jpg
 thumbnailImagePosition: right
