@@ -17,7 +17,7 @@
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"一般在部署完MySQL的时候都需要设置开机启动，本文讲解CentOS7下如何配置MySQL开机自启。\n\n\nCentOS7和6及以前的版本不一样，下面推荐使用systemctl命令来管理服务而不是以前的service(虽然service还能用)，废话不多说，直接看怎么做吧\n创建服务文件1touch &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;mysqld.service\n\nmysqld是服务的名字，可自定义，不过必须以.service结尾。\n服务文件内容如下：\n123456789101112131415[Unit]Description&#x3D;MySQL ServerDocumentation&#x3D;man:mysqld(8)Documentation&#x3D;https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;5.7&#x2F;en&#x2F;using-systemd.htmlAfter&#x3D;network.targetAfter&#x3D;syslog.target[Install]WantedBy&#x3D;multi-user.target[Service]User&#x3D;mysqlGroup&#x3D;mysqlExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;mysql&#x2F;bin&#x2F;mysqld --defaults-file&#x3D;&#x2F;etc&#x2F;my.cnfLimitNOFILE &#x3D; 5000\n\n内容还是通俗易懂的，就不细说啦，需要注意的是ExecStart是启动MySQL的脚本，这里需要使用mysqld文件来启动，而不是使用service命令时的support-files/mysql.server，这里有个好处就是，在多实例又不想使用MySQL官方自带的mysqlmulti的时候，就很方便。\n配置开机自启创建好服务文件之后，开机自启就简单了，一条命令即可：\n1systemctl enable mysqld\n\n同时还可以使用systemctl命令启停MySQL实例，是不是很方便呀，赶紧试试吧！\n","dateCreated":"2020-12-29T00:00:00+00:00","dateModified":"2021-06-09T09:52:23+00:00","datePublished":"2020-12-29T00:00:00+00:00","description":"一般在部署完MySQL的时候都需要设置开机启动，本文讲解CentOS7下如何配置MySQL开机自启。","headline":"CentOS7下如何设置MySQL开机自启","image":["1611856804.jpg","1611770404.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2020/12/29/CentOS7%E4%B8%8B%E5%A6%82%E4%BD%95%E8%AE%BE%E7%BD%AEMySQL%E5%BC%80%E6%9C%BA%E8%87%AA%E5%90%AF/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2020/12/29/CentOS7%E4%B8%8B%E5%A6%82%E4%BD%95%E8%AE%BE%E7%BD%AEMySQL%E5%BC%80%E6%9C%BA%E8%87%AA%E5%90%AF/","keywords":"MySQL","thumbnailUrl":"1611856804.jpg"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"一般在部署完MySQL的时候都需要设置开机启动，本文讲解CentOS7下如何配置MySQL开机自启。\n\n\nCentOS7和6及以前的版本不一样，下面推荐使用systemctl命令来管理服务而不是以前的service(虽然service还能用)，废话不多说，直接看怎么做吧\n创建服务文件1touch &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;mysqld.service\n\nmysqld是服务的名字，可自定义，不过必须以.service结尾。\n服务文件内容如下：\n123456789101112131415[Unit]Description&#x3D;MySQL ServerDocumentation&#x3D;man:mysqld(8)Documentation&#x3D;https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;5.7&#x2F;en&#x2F;using-systemd.htmlAfter&#x3D;network.targetAfter&#x3D;syslog.target[Install]WantedBy&#x3D;multi-user.target[Service]User&#x3D;mysqlGroup&#x3D;mysqlExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;mysql&#x2F;bin&#x2F;mysqld --defaults-file&#x3D;&#x2F;etc&#x2F;my.cnfLimitNOFILE &#x3D; 5000\n\n内容还是通俗易懂的，就不细说啦，需要注意的是ExecStart是启动MySQL的脚本，这里需要使用mysqld文件来启动，而不是使用service命令时的support-files/mysql.server，这里有个好处就是，在多实例又不想使用MySQL官方自带的mysqlmulti的时候，就很方便。\n配置开机自启创建好服务文件之后，开机自启就简单了，一条命令即可：\n1systemctl enable mysqld\n\n同时还可以使用systemctl命令启停MySQL实例，是不是很方便呀，赶紧试试吧！\n","dateCreated":"2020-12-29T00:00:00+00:00","dateModified":"2021-06-10T12:29:49+00:00","datePublished":"2020-12-29T00:00:00+00:00","description":"一般在部署完MySQL的时候都需要设置开机启动，本文讲解CentOS7下如何配置MySQL开机自启。","headline":"CentOS7下如何设置MySQL开机自启","image":["1611856804.jpg","1611770404.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2020/12/29/CentOS7%E4%B8%8B%E5%A6%82%E4%BD%95%E8%AE%BE%E7%BD%AEMySQL%E5%BC%80%E6%9C%BA%E8%87%AA%E5%90%AF/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2020/12/29/CentOS7%E4%B8%8B%E5%A6%82%E4%BD%95%E8%AE%BE%E7%BD%AEMySQL%E5%BC%80%E6%9C%BA%E8%87%AA%E5%90%AF/","keywords":"MySQL","thumbnailUrl":"1611856804.jpg"}</script>
     <meta name="description" content="一般在部署完MySQL的时候都需要设置开机启动，本文讲解CentOS7下如何配置MySQL开机自启。">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="CentOS7下如何设置MySQL开机自启">
@@ -26,7 +26,7 @@
 <meta property="og:description" content="一般在部署完MySQL的时候都需要设置开机启动，本文讲解CentOS7下如何配置MySQL开机自启。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-12-29T00:00:00.000Z">
-<meta property="article:modified_time" content="2021-06-09T09:52:23.536Z">
+<meta property="article:modified_time" content="2021-06-10T12:29:49.148Z">
 <meta property="article:author" content="CodingCat">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary">
@@ -48,7 +48,7 @@
     
     <!--STYLES-->
     
-<link rel="stylesheet" href="/assets/css/style-exujwvuplbh4nxasf6k6durhuqetkslmzqmoku0mplvth2phwoskwioruczo.min.css">
+<link rel="stylesheet" href="/assets/css/style-qxxqyn5w3brwkdpwfm4qtparxnilnpfbbdj5z6boeeclsw5o4znri5mfig3a.min.css">
 
     <!--STYLES END-->
     
@@ -642,7 +642,7 @@
 <div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
         <!--SCRIPTS-->
 
-<script src="/assets/js/script-el1jckqzxkihsaeltcn14mwjbl2fopshayzynoh1zw6hzdh1ommzpyfmqbqe.min.js"></script>
+<script src="/assets/js/script-bfgl9uiptwkbw76kr2cbqbseiugostfszghdtk8ysir5hbhpeve8j7b5gfpo.min.js"></script>
 
 <!--SCRIPTS END-->
 
