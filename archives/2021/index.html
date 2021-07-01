@@ -39,7 +39,7 @@
     
     <!--STYLES-->
     
-<link rel="stylesheet" href="/assets/css/style-qxxqyn5w3brwkdpwfm4qtparxnilnpfbbdj5z6boeeclsw5o4znri5mfig3a.min.css">
+<link rel="stylesheet" href="/assets/css/style-7vxooq3w6ka37k2b1fvga0bznj6ojidlk99gxogmokvaxn1drcgatxdetdw5.min.css">
 
     <!--STYLES END-->
     
@@ -223,6 +223,73 @@
                         ">
                 
     <section class="postShorten-group main-content-wrap">
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-bottom">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
+                            href="/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                            aria-label=": 冒泡算法的Python实现"
+                        >
+                            冒泡算法的Python实现
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2021-07-01T15:33:59+00:00">
+	
+		    7月 01, 2021
+    	
+    </time>
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-content">
+                    <h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>冒泡算法是十大排序算法之一，比较常见。其原理是重复地走访要排序的数列，一次比较相邻两个元素，如果元素位置错误，则交换位置，直到没有数据需要交换为止。</p>
+<p>冒泡排序中，最大的元素在每一次排序后都会跑到数列右端，就像开水中的水泡网上冒一样，最大的泡先冒出来。</p>
+<p>冒泡排序也叫下沉排序，此时是将小的元素往右移，即每趟排序都将数组内的最小元素移到数组最左端。</p>
+<h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><ol>
+<li>遍历数组，比较相邻两个元素，如果第一个大于第二个，则交换位置；</li>
+<li>对每一对相邻的元素做同样的动作，从开始第一对到最后一对，完成后，最大的元素将跑到数组的最右端，完成第一趟排序；</li>
+<li>对所有元素重复上面的步骤，除了最后一个；</li>
+<li>重复上面的步骤，每次排序的元素将越来越少，直到没有元素需要比较为止。</li>
+</ol>
+<h2 id="图解"><a href="#图解" class="headerlink" title="图解"></a>图解</h2><p><img src="%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F.gif" alt="冒泡排序"></p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>冒泡排序使用Python实现如下:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">bubble_sort</span>(<span class="params">array</span>):</span></span><br><span class="line">    length = <span class="built_in">len</span>(array)</span><br><span class="line">    <span class="keyword">for</span> index <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, length-index):</span><br><span class="line">            <span class="keyword">if</span> array[i-<span class="number">1</span>] &gt; array[i]:</span><br><span class="line">                array[i-<span class="number">1</span>], array[i] = array[i], array[i - <span class="number">1</span>]</span><br><span class="line">    <span class="keyword">return</span> array</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">l = [<span class="number">16</span>, <span class="number">5</span>, <span class="number">8</span>, <span class="number">15</span>, <span class="number">7</span>, <span class="number">9</span>, <span class="number">19</span>, <span class="number">18</span>, <span class="number">3</span>, <span class="number">6</span>, <span class="number">49</span>]</span><br><span class="line">print(bubble_sort(l))</span><br></pre></td></tr></table></figure>
+
+<p>对于上面的代码，如果要排序的数组本身是有序的，也会老老实实的跑完n趟（n为数组中元素个数），但是这种情况下，是不必要的，因此可加一个标志，如果已经是有序的，即没有元素交换，则结束排序过程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">bubble_sort</span>(<span class="params">array</span>):</span></span><br><span class="line">    length = <span class="built_in">len</span>(array)</span><br><span class="line">    <span class="keyword">for</span> index <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">        flag = <span class="literal">True</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, length-index):</span><br><span class="line">            <span class="keyword">if</span> array[i-<span class="number">1</span>] &gt; array[i]:</span><br><span class="line">                array[i-<span class="number">1</span>], array[i] = array[i], array[i - <span class="number">1</span>]</span><br><span class="line">                flag = <span class="literal">False</span></span><br><span class="line">        <span class="keyword">if</span> flag:</span><br><span class="line">            <span class="keyword">return</span> array</span><br><span class="line">    <span class="keyword">return</span> array</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">l = [<span class="number">16</span>, <span class="number">5</span>, <span class="number">8</span>, <span class="number">15</span>, <span class="number">7</span>, <span class="number">9</span>, <span class="number">19</span>, <span class="number">18</span>, <span class="number">3</span>, <span class="number">6</span>, <span class="number">49</span>]</span><br><span class="line">print(bubble_sort(l))</span><br></pre></td></tr></table></figure>
+
+
+                    
+                        
+
+
+                    
+                    
+                        <p>
+                            <a
+                                href="/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/#post-footer"
+                                class="postShorten-excerpt_link link"
+                                aria-label=""
+                            >
+                                评论和共享
+                            </a>
+                        </p>
+                    
+                </div>
+            
+        </div>
+        
+    </article>
     
     
     <article class="postShorten postShorten--thumbnailimg-right">
@@ -770,7 +837,7 @@
 <div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
         <!--SCRIPTS-->
 
-<script src="/assets/js/script-bfgl9uiptwkbw76kr2cbqbseiugostfszghdtk8ysir5hbhpeve8j7b5gfpo.min.js"></script>
+<script src="/assets/js/script-gmjobet8buiqvkuhb7e7zd8rl7ln4ataomj8oatuz90lg0fpsou1zfhh5jon.min.js"></script>
 
 <!--SCRIPTS END-->
 
