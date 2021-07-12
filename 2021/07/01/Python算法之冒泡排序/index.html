@@ -17,22 +17,22 @@
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。\n\n\n原理冒泡算法原理是十大排序算法之一，比较常见。其原理是重复地走访要排序的数列，一次比较相邻两个元素，如果元素位置错误，则交换位置，直到没有数据需要交换为止。\n冒泡排序中，最大的元素在每一次排序后都会跑到数列右端，就像开水中的水泡网上冒一样，最大的泡先冒出来。\n冒泡排序也叫下沉排序，此时是将小的元素往右移，即每趟排序都将数组内的最小元素移到数组最左端。\n步骤\n遍历数组，比较相邻两个元素，如果第一个大于第二个，则交换位置；\n对每一对相邻的元素做同样的动作，从开始第一对到最后一对，完成后，最大的元素将跑到数组的最右端，完成第一趟排序；\n对所有元素重复上面的步骤，除了最后一个；\n重复上面的步骤，每次排序的元素将越来越少，直到没有元素需要比较为止。\n\n图解\n实现冒泡排序使用Python实现如下:\n1234567891011def bubble_sort(array):    length = len(array)    for index in range(length):        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n对于上面的代码，如果要排序的数组本身是有序的，也会老老实实的跑完n趟（n为数组中元素个数），但是这种情况下，是不必要的，因此可加一个标志，如果已经是有序的，即没有元素交换，则结束排序过程：\n123456789101112131415def bubble_sort(array):    length = len(array)    for index in range(length):        flag = True        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]                flag = False        if flag:            return array    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n","dateCreated":"2021-07-01T15:33:59+00:00","dateModified":"2021-07-10T03:10:55+00:00","datePublished":"2021-07-01T15:33:59+00:00","description":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。","headline":"冒泡算法的Python实现","image":["1604599205.jpg","1604599205.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/","keywords":"排序算法, 冒泡排序","thumbnailUrl":"1604599205.jpg"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。\n\n\n原理冒泡算法原理是十大排序算法之一，比较常见。其原理是重复地走访要排序的数列，一次比较相邻两个元素，如果元素位置错误，则交换位置，直到没有数据需要交换为止。\n冒泡排序中，最大的元素在每一次排序后都会跑到数列右端，就像开水中的水泡网上冒一样，最大的泡先冒出来。\n冒泡排序也叫下沉排序，此时是将小的元素往右移，即每趟排序都将数组内的最小元素移到数组最左端。\n步骤\n遍历数组，比较相邻两个元素，如果第一个大于第二个，则交换位置；\n对每一对相邻的元素做同样的动作，从开始第一对到最后一对，完成后，最大的元素将跑到数组的最右端，完成第一趟排序；\n对所有元素重复上面的步骤，除了最后一个；\n重复上面的步骤，每次排序的元素将越来越少，直到没有元素需要比较为止。\n\n图解\n实现冒泡排序使用Python实现如下:\n1234567891011def bubble_sort(array):    length = len(array)    for index in range(length):        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n对于上面的代码，如果要排序的数组本身是有序的，也会老老实实的跑完n趟（n为数组中元素个数），但是这种情况下，是不必要的，因此可加一个标志，如果已经是有序的，即没有元素交换，则结束排序过程：\n123456789101112131415def bubble_sort(array):    length = len(array)    for index in range(length):        flag = True        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]                flag = False        if flag:            return array    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n","dateCreated":"2021-07-01T15:33:59+00:00","dateModified":"2021-07-12T01:49:49+00:00","datePublished":"2021-07-01T15:33:59+00:00","description":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。","headline":"冒泡算法的Python实现","image":["1604599205.jpg","1604599205.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/","keywords":"排序算法, 冒泡排序","thumbnailUrl":"1604599205.jpg"}</script>
     <meta name="description" content="算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="冒泡算法的Python实现">
-<meta property="og:url" content="http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:url" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/index.html">
 <meta property="og:site_name" content="写程序的猫">
 <meta property="og:description" content="算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F.gif">
+<meta property="og:image" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F.gif">
 <meta property="article:published_time" content="2021-07-01T15:33:59.000Z">
-<meta property="article:modified_time" content="2021-07-10T03:10:55.961Z">
+<meta property="article:modified_time" content="2021-07-12T01:49:49.057Z">
 <meta property="article:author" content="CodingCat">
 <meta property="article:tag" content="排序算法">
 <meta property="article:tag" content="冒泡排序">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F.gif">
+<meta name="twitter:image" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F.gif">
     
     
         
@@ -41,17 +41,17 @@
         <meta property="og:image" content="http://blog.codingcat.net/assets/images/portrait.jpg"/>
     
     
-        <meta property="og:image" content="http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/1604599205.jpg"/>
-        <meta class="swiftype" name="image" data-type="enum" content="http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/1604599205.jpg"/>
+        <meta property="og:image" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/1604599205.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/1604599205.jpg"/>
     
     
-        <meta property="og:image" content="http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/1604599205.jpg"/>
-        <meta class="swiftype" name="image" data-type="enum" content="http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/1604599205.jpg"/>
+        <meta property="og:image" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/1604599205.jpg"/>
+        <meta class="swiftype" name="image" data-type="enum" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/1604599205.jpg"/>
     
     
     <!--STYLES-->
     
-<link rel="stylesheet" href="/assets/css/style-bxojwr7f71dcl7823g4szbezfnagdpyeiihad0gqlihlobcq1h6lxnr4wxag.min.css">
+<link rel="stylesheet" href="/assets/css/style-61fv21jlbkuyt30zmsxm0iqkikbrziwhvvo1che5zagkzlebx8dwsfchczuo.min.css">
 
     <!--STYLES END-->
     
@@ -234,7 +234,7 @@
         <div class="post-header-cover
                     text-left
                     post-header-cover--partial"
-             style="background-image:url('/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/1604599205.jpg');"
+             style="background-image:url('/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/1604599205.jpg');"
              data-behavior="4">
             
         </div>
@@ -359,7 +359,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                     title="分享到 Weibo"
                     aria-label="分享到 Weibo"
                 >
@@ -372,7 +372,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/&amp;title=冒泡算法的Python实现"
+                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/&amp;title=冒泡算法的Python实现"
                     title="分享到 QQ"
                     aria-label="分享到 QQ"
                 >
@@ -385,7 +385,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                     title="分享到 Qzone"
                     aria-label="分享到 Qzone"
                 >
@@ -398,7 +398,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                     title="分享到 Renren"
                     aria-label="分享到 Renren"
                 >
@@ -487,7 +487,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                    target="new" href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                     title="分享到 Weibo"
                     aria-label="分享到 Weibo"
                 >
@@ -500,7 +500,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/&amp;title=冒泡算法的Python实现"
+                    target="new" href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/&amp;title=冒泡算法的Python实现"
                     title="分享到 QQ"
                     aria-label="分享到 QQ"
                 >
@@ -513,7 +513,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                    target="new" href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                     title="分享到 Qzone"
                     aria-label="分享到 Qzone"
                 >
@@ -526,7 +526,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                    target="new" href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                     title="分享到 Renren"
                     aria-label="分享到 Renren"
                 >
@@ -560,7 +560,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                        href="http://service.weibo.com/share/share.php?&amp;title=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                         aria-label="分享到 Weibo"
                     >
                         <i class="fab fa-weibo" aria-hidden="true"></i><span>分享到 Weibo</span>
@@ -573,7 +573,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/&amp;title=冒泡算法的Python实现"
+                        href="http://connect.qq.com/widget/shareqq/index.html?url=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/&amp;title=冒泡算法的Python实现"
                         aria-label="分享到 QQ"
                     >
                         <i class="fab fa-qq" aria-hidden="true"></i><span>分享到 QQ</span>
@@ -586,7 +586,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                        href="http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                         aria-label="分享到 Qzone"
                     >
                         <i class="fa fa-star" aria-hidden="true"></i><span>分享到 Qzone</span>
@@ -599,7 +599,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/07/01/%E5%86%92%E6%B3%A1%E7%AE%97%E6%B3%95%E7%9A%84Python%E5%AE%9E%E7%8E%B0/"
+                        href="http://widget.renren.com/dialog/share?resourceUrl=http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"
                         aria-label="分享到 Renren"
                     >
                         <i class="fab fa-renren" aria-hidden="true"></i><span>分享到 Renren</span>
@@ -649,7 +649,7 @@
 <div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
         <!--SCRIPTS-->
 
-<script src="/assets/js/script-cdmw6v8xc7a8kei5fx5bhmxmapxhdkeqsu0xtg5wonywr3dxr0ks6caokn5y.min.js"></script>
+<script src="/assets/js/script-ewokae75lgupcvhzgesnvb67ebi9epxhgbzdm95gst4wn5okd2zehxozl3ks.min.js"></script>
 
 <!--SCRIPTS END-->
 
