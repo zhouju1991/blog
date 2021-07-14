@@ -18,3 +18,5 @@ date: 2021-06-08 20:23:24
 <!-- more -->
 
 ![Django常见问题](Django.png)
+
+[下载Xmind脑图](Django.xmind)
