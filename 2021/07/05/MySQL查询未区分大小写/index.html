@@ -17,7 +17,7 @@
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"MySQL中，查询条件匹配的时候是否区分大小写？什么情况下区分？什么情况下不区分？遇到需要区分但是没有区分的场景该如何处理？\n\n\n场景考虑如下场景：\n12345678910111213mysql&gt; use test_0705;Database changedmysql&gt; select * from tb_test where name &#x3D; &#39;CodingCat&#39;;+----+-----------+| id | name      |+----+-----------+|  1 | CodingCat ||  2 | CODINGCAT ||  3 | codingcat |+----+-----------+3 rows in set (0.02 sec)mysql&gt; \n\n从上图我们看到，查询条件中指定要查询的是name=&#39;CodingCat&#39;，但是结果把CODINGCAT和codingcat一起给查询出来了，可见此查询结果并未区分大小写。\n探究我们知道，在MySQL中有排序规则这个概念，排序规则表示在规定的存储的数据编码格式下的比较规则，如是否区分大小写等。针对上面的场景，查看表结构如下：\n12345678910111213mysql&gt; show create table tb_test;+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| Table   | Create Table                                                                                                                                                                |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| tb_test | CREATE TABLE &#96;tb_test&#96; (  &#96;id&#96; int(11) NOT NULL AUTO_INCREMENT,  &#96;name&#96; varchar(255) DEFAULT NULL,  PRIMARY KEY (&#96;id&#96;)) ENGINE&#x3D;InnoDB AUTO_INCREMENT&#x3D;4 DEFAULT CHARSET&#x3D;utf8 |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+1 row in set (0.04 sec)mysql&gt; \n\n该表继承了数据库的排序规则，数据库建表语句如下：\n123456789mysql&gt; show create database test_0705;+-----------+--------------------------------------------------------------------+| Database  | Create Database                                                    |+-----------+--------------------------------------------------------------------+| test_0705 | CREATE DATABASE &#96;test_0705&#96; &#x2F;*!40100 DEFAULT CHARACTER SET utf8 *&#x2F; |+-----------+--------------------------------------------------------------------+1 row in set (0.03 sec)mysql&gt; \n\n从数据库建表语句来看，并没有指定排序规则，则该数据库继承了全局的排序规则，查看数据库的排序规则如下：\n1234567891011mysql&gt; show variables like &#39;collation%&#39;;+----------------------+--------------------+| Variable_name        | Value              |+----------------------+--------------------+| collation_connection | utf8mb4_general_ci || collation_database   | utf8_general_ci    || collation_server     | utf8mb4_general_ci |+----------------------+--------------------+3 rows in set (0.38 sec)mysql&gt; \n\n从全局的配置来看，数据库服务器使用的是utf8mb4_general_ci排序规则，后缀有ci，意思是case insensitive，即大小写不敏感，所以查询出来的结果不区分大小写。\n在MySQL中，排序规则常见有带后缀ci和不带ci两种，如utf8_bin和utf8_genera_ci，带ci表示区分大小写，否则不区分。\n解决对于上面的问题，如果在设置了字符排序规则是带ci后缀的，但是又想要查询结果是区分大小写，怎么做？有两种解决方法。\n\n查询时在需要区分大小写的字段条件上使用binary关键字\n123456789mysql&gt; select * from tb_test where binary name &#x3D; &#39;CodingCat&#39;;+----+-----------+| id | name      |+----+-----------+|  1 | CodingCat |+----+-----------+1 row in set (0.04 sec)mysql&gt; \n修改表中字段的排序规则\n12345678910111213141516171819202122232425mysql&gt; ALTER TABLE tb_test MODIFY COLUMN name VARCHAR(255) BINARY CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL;Query OK, 3 rows affected (0.08 sec)Records: 3  Duplicates: 0  Warnings: 0mysql&gt; show create table tb_test;+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| Table   | Create Table                                                                                                                                                                                                    |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| tb_test | CREATE TABLE &#96;tb_test&#96; (  &#96;id&#96; int(11) NOT NULL AUTO_INCREMENT,  &#96;name&#96; varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,  PRIMARY KEY (&#96;id&#96;)) ENGINE&#x3D;InnoDB AUTO_INCREMENT&#x3D;4 DEFAULT CHARSET&#x3D;utf8 |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+1 row in set (0.05 sec)mysql&gt; select * from tb_test where binary name &#x3D; &#39;CodingCat&#39;;+----+-----------+| id | name      |+----+-----------+|  1 | CodingCat |+----+-----------+1 row in set (0.05 sec)mysql&gt; \n\n","dateCreated":"2021-07-05T17:45:23+00:00","dateModified":"2021-07-14T13:01:00+00:00","datePublished":"2021-07-05T17:45:23+00:00","description":"MySQL中，查询条件匹配的时候是否区分大小写？什么情况下区分？什么情况下不区分？遇到需要区分但是没有区分的场景该如何处理？","headline":"MySQL查询未区分大小写","image":["1606845605.jpg","1606845605.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2021/07/05/MySQL%E6%9F%A5%E8%AF%A2%E6%9C%AA%E5%8C%BA%E5%88%86%E5%A4%A7%E5%B0%8F%E5%86%99/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2021/07/05/MySQL%E6%9F%A5%E8%AF%A2%E6%9C%AA%E5%8C%BA%E5%88%86%E5%A4%A7%E5%B0%8F%E5%86%99/","keywords":"MySQL","thumbnailUrl":"1606845605.jpg"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"MySQL中，查询条件匹配的时候是否区分大小写？什么情况下区分？什么情况下不区分？遇到需要区分但是没有区分的场景该如何处理？\n\n\n场景考虑如下场景：\n12345678910111213mysql&gt; use test_0705;Database changedmysql&gt; select * from tb_test where name &#x3D; &#39;CodingCat&#39;;+----+-----------+| id | name      |+----+-----------+|  1 | CodingCat ||  2 | CODINGCAT ||  3 | codingcat |+----+-----------+3 rows in set (0.02 sec)mysql&gt; \n\n从上图我们看到，查询条件中指定要查询的是name=&#39;CodingCat&#39;，但是结果把CODINGCAT和codingcat一起给查询出来了，可见此查询结果并未区分大小写。\n探究我们知道，在MySQL中有排序规则这个概念，排序规则表示在规定的存储的数据编码格式下的比较规则，如是否区分大小写等。针对上面的场景，查看表结构如下：\n12345678910111213mysql&gt; show create table tb_test;+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| Table   | Create Table                                                                                                                                                                |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| tb_test | CREATE TABLE &#96;tb_test&#96; (  &#96;id&#96; int(11) NOT NULL AUTO_INCREMENT,  &#96;name&#96; varchar(255) DEFAULT NULL,  PRIMARY KEY (&#96;id&#96;)) ENGINE&#x3D;InnoDB AUTO_INCREMENT&#x3D;4 DEFAULT CHARSET&#x3D;utf8 |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+1 row in set (0.04 sec)mysql&gt; \n\n该表继承了数据库的排序规则，数据库建表语句如下：\n123456789mysql&gt; show create database test_0705;+-----------+--------------------------------------------------------------------+| Database  | Create Database                                                    |+-----------+--------------------------------------------------------------------+| test_0705 | CREATE DATABASE &#96;test_0705&#96; &#x2F;*!40100 DEFAULT CHARACTER SET utf8 *&#x2F; |+-----------+--------------------------------------------------------------------+1 row in set (0.03 sec)mysql&gt; \n\n从数据库建表语句来看，并没有指定排序规则，则该数据库继承了全局的排序规则，查看数据库的排序规则如下：\n1234567891011mysql&gt; show variables like &#39;collation%&#39;;+----------------------+--------------------+| Variable_name        | Value              |+----------------------+--------------------+| collation_connection | utf8mb4_general_ci || collation_database   | utf8_general_ci    || collation_server     | utf8mb4_general_ci |+----------------------+--------------------+3 rows in set (0.38 sec)mysql&gt; \n\n从全局的配置来看，数据库服务器使用的是utf8mb4_general_ci排序规则，后缀有ci，意思是case insensitive，即大小写不敏感，所以查询出来的结果不区分大小写。\n在MySQL中，排序规则常见有带后缀ci和不带ci两种，如utf8_bin和utf8_genera_ci，带ci表示区分大小写，否则不区分。\n解决对于上面的问题，如果在设置了字符排序规则是带ci后缀的，但是又想要查询结果是区分大小写，怎么做？有两种解决方法。\n\n查询时在需要区分大小写的字段条件上使用binary关键字\n123456789mysql&gt; select * from tb_test where binary name &#x3D; &#39;CodingCat&#39;;+----+-----------+| id | name      |+----+-----------+|  1 | CodingCat |+----+-----------+1 row in set (0.04 sec)mysql&gt; \n修改表中字段的排序规则\n12345678910111213141516171819202122232425mysql&gt; ALTER TABLE tb_test MODIFY COLUMN name VARCHAR(255) BINARY CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL;Query OK, 3 rows affected (0.08 sec)Records: 3  Duplicates: 0  Warnings: 0mysql&gt; show create table tb_test;+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| Table   | Create Table                                                                                                                                                                                                    |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+| tb_test | CREATE TABLE &#96;tb_test&#96; (  &#96;id&#96; int(11) NOT NULL AUTO_INCREMENT,  &#96;name&#96; varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,  PRIMARY KEY (&#96;id&#96;)) ENGINE&#x3D;InnoDB AUTO_INCREMENT&#x3D;4 DEFAULT CHARSET&#x3D;utf8 |+---------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+1 row in set (0.05 sec)mysql&gt; select * from tb_test where binary name &#x3D; &#39;CodingCat&#39;;+----+-----------+| id | name      |+----+-----------+|  1 | CodingCat |+----+-----------+1 row in set (0.05 sec)mysql&gt; \n\n","dateCreated":"2021-07-05T17:45:23+00:00","dateModified":"2021-07-15T05:04:13+00:00","datePublished":"2021-07-05T17:45:23+00:00","description":"MySQL中，查询条件匹配的时候是否区分大小写？什么情况下区分？什么情况下不区分？遇到需要区分但是没有区分的场景该如何处理？","headline":"MySQL查询未区分大小写","image":["1606845605.jpg","1606845605.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2021/07/05/MySQL%E6%9F%A5%E8%AF%A2%E6%9C%AA%E5%8C%BA%E5%88%86%E5%A4%A7%E5%B0%8F%E5%86%99/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2021/07/05/MySQL%E6%9F%A5%E8%AF%A2%E6%9C%AA%E5%8C%BA%E5%88%86%E5%A4%A7%E5%B0%8F%E5%86%99/","keywords":"MySQL","thumbnailUrl":"1606845605.jpg"}</script>
     <meta name="description" content="MySQL中，查询条件匹配的时候是否区分大小写？什么情况下区分？什么情况下不区分？遇到需要区分但是没有区分的场景该如何处理？">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="MySQL查询未区分大小写">
@@ -26,7 +26,7 @@
 <meta property="og:description" content="MySQL中，查询条件匹配的时候是否区分大小写？什么情况下区分？什么情况下不区分？遇到需要区分但是没有区分的场景该如何处理？">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-07-05T17:45:23.000Z">
-<meta property="article:modified_time" content="2021-07-14T13:01:00.020Z">
+<meta property="article:modified_time" content="2021-07-15T05:04:13.021Z">
 <meta property="article:author" content="CodingCat">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary">
@@ -48,7 +48,7 @@
     
     <!--STYLES-->
     
-<link rel="stylesheet" href="/assets/css/style-khxwazv8lvtak2nw1cxe7duwn1izoylfjirmh8gjw0q5atflrduqpxozf97i.min.css">
+<link rel="stylesheet" href="/assets/css/style-lrnlxdx59vow4qfqlcltopouebtn6bxeqettn9qsxzzhjwom5ax1xw9xrgea.min.css">
 
     <!--STYLES END-->
     
@@ -318,11 +318,14 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    <a
-                        class="post-action-btn btn btn--disabled"
-                        aria-hidden="true"
-                    >
-                        
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/07/15/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9A%E5%9B%9E%E8%A1%A8%E3%80%81%E8%A6%86%E7%9B%96%E7%B4%A2%E5%BC%95%E5%8F%8A%E7%B4%A2%E5%BC%95%E4%B8%8B%E6%8E%A8%E4%BC%98%E5%8C%96/"
+                    data-tooltip="MySQL性能优化：回表、覆盖索引及索引下推优化"
+                    aria-label="上一篇: MySQL性能优化：回表、覆盖索引及索引下推优化"
+                >
+                    
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
                     </a>
@@ -443,11 +446,14 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    <a
-                        class="post-action-btn btn btn--disabled"
-                        aria-hidden="true"
-                    >
-                        
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2021/07/15/MySQL%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9A%E5%9B%9E%E8%A1%A8%E3%80%81%E8%A6%86%E7%9B%96%E7%B4%A2%E5%BC%95%E5%8F%8A%E7%B4%A2%E5%BC%95%E4%B8%8B%E6%8E%A8%E4%BC%98%E5%8C%96/"
+                    data-tooltip="MySQL性能优化：回表、覆盖索引及索引下推优化"
+                    aria-label="上一篇: MySQL性能优化：回表、覆盖索引及索引下推优化"
+                >
+                    
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">上一篇</span>
                     </a>
@@ -646,7 +652,7 @@
 <div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
         <!--SCRIPTS-->
 
-<script src="/assets/js/script-qw5rhxhmpt1uwv7f09szl73tpjwdntnvosrl5jh6jtsqdqxvjfveyckvidtc.min.js"></script>
+<script src="/assets/js/script-zlbfwhnmde0hpeh30x8vqdycn8y7d5owg9gd56v5kettuixda4snfgdvwecg.min.js"></script>
 
 <!--SCRIPTS END-->
 

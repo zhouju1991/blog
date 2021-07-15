@@ -17,7 +17,7 @@
             <link rel="alternate" type="application/atom+xml" title="RSS" href="/atom.xml">
         
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。\n\n\n原理冒泡算法原理是十大排序算法之一，比较常见。其原理是重复地走访要排序的数列，一次比较相邻两个元素，如果元素位置错误，则交换位置，直到没有数据需要交换为止。\n冒泡排序中，最大的元素在每一次排序后都会跑到数列右端，就像开水中的水泡网上冒一样，最大的泡先冒出来。\n冒泡排序也叫下沉排序，此时是将小的元素往右移，即每趟排序都将数组内的最小元素移到数组最左端。\n步骤\n遍历数组，比较相邻两个元素，如果第一个大于第二个，则交换位置；\n对每一对相邻的元素做同样的动作，从开始第一对到最后一对，完成后，最大的元素将跑到数组的最右端，完成第一趟排序；\n对所有元素重复上面的步骤，除了最后一个；\n重复上面的步骤，每次排序的元素将越来越少，直到没有元素需要比较为止。\n\n图解\n实现冒泡排序使用Python实现如下:\n1234567891011def bubble_sort(array):    length = len(array)    for index in range(length):        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n对于上面的代码，如果要排序的数组本身是有序的，也会老老实实的跑完n趟（n为数组中元素个数），但是这种情况下，是不必要的，因此可加一个标志，如果已经是有序的，即没有元素交换，则结束排序过程：\n123456789101112131415def bubble_sort(array):    length = len(array)    for index in range(length):        flag = True        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]                flag = False        if flag:            return array    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n","dateCreated":"2021-07-01T15:33:59+00:00","dateModified":"2021-07-14T13:01:00+00:00","datePublished":"2021-07-01T15:33:59+00:00","description":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。","headline":"冒泡算法的Python实现","image":["1604599205.jpg","1604599205.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/","keywords":"排序算法, 冒泡排序","thumbnailUrl":"1604599205.jpg"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg"},"articleBody":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。\n\n\n原理冒泡算法原理是十大排序算法之一，比较常见。其原理是重复地走访要排序的数列，一次比较相邻两个元素，如果元素位置错误，则交换位置，直到没有数据需要交换为止。\n冒泡排序中，最大的元素在每一次排序后都会跑到数列右端，就像开水中的水泡网上冒一样，最大的泡先冒出来。\n冒泡排序也叫下沉排序，此时是将小的元素往右移，即每趟排序都将数组内的最小元素移到数组最左端。\n步骤\n遍历数组，比较相邻两个元素，如果第一个大于第二个，则交换位置；\n对每一对相邻的元素做同样的动作，从开始第一对到最后一对，完成后，最大的元素将跑到数组的最右端，完成第一趟排序；\n对所有元素重复上面的步骤，除了最后一个；\n重复上面的步骤，每次排序的元素将越来越少，直到没有元素需要比较为止。\n\n图解\n实现冒泡排序使用Python实现如下:\n1234567891011def bubble_sort(array):    length = len(array)    for index in range(length):        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n对于上面的代码，如果要排序的数组本身是有序的，也会老老实实的跑完n趟（n为数组中元素个数），但是这种情况下，是不必要的，因此可加一个标志，如果已经是有序的，即没有元素交换，则结束排序过程：\n123456789101112131415def bubble_sort(array):    length = len(array)    for index in range(length):        flag = True        for i in range(1, length-index):            if array[i-1] &gt; array[i]:                array[i-1], array[i] = array[i], array[i - 1]                flag = False        if flag:            return array    return arrayl = [16, 5, 8, 15, 7, 9, 19, 18, 3, 6, 49]print(bubble_sort(l))\n\n","dateCreated":"2021-07-01T15:33:59+00:00","dateModified":"2021-07-15T05:04:13+00:00","datePublished":"2021-07-01T15:33:59+00:00","description":"算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。","headline":"冒泡算法的Python实现","image":["1604599205.jpg","1604599205.jpg"],"mainEntityOfPage":{"@type":"WebPage","@id":"http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/"},"publisher":{"@type":"Organization","name":"CodingCat","sameAs":["https://github.com/zhouju1991"],"image":"portrait.jpg","logo":{"@type":"ImageObject","url":"portrait.jpg"}},"url":"http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/","keywords":"排序算法, 冒泡排序","thumbnailUrl":"1604599205.jpg"}</script>
     <meta name="description" content="算法是程序设计的基础，在诸多算法之中，排序算法是我们接触比较多的算法。冒泡算法是十大排序算法之一，比较常见，在面试中经常会被问到。">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="冒泡算法的Python实现">
@@ -27,7 +27,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://blog.codingcat.net/2021/07/01/Python%E7%AE%97%E6%B3%95%E4%B9%8B%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F.gif">
 <meta property="article:published_time" content="2021-07-01T15:33:59.000Z">
-<meta property="article:modified_time" content="2021-07-14T13:01:00.024Z">
+<meta property="article:modified_time" content="2021-07-15T05:04:13.025Z">
 <meta property="article:author" content="CodingCat">
 <meta property="article:tag" content="排序算法">
 <meta property="article:tag" content="冒泡排序">
@@ -51,7 +51,7 @@
     
     <!--STYLES-->
     
-<link rel="stylesheet" href="/assets/css/style-khxwazv8lvtak2nw1cxe7duwn1izoylfjirmh8gjw0q5atflrduqpxozf97i.min.css">
+<link rel="stylesheet" href="/assets/css/style-lrnlxdx59vow4qfqlcltopouebtn6bxeqettn9qsxzzhjwom5ax1xw9xrgea.min.css">
 
     <!--STYLES END-->
     
@@ -649,7 +649,7 @@
 <div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
         <!--SCRIPTS-->
 
-<script src="/assets/js/script-qw5rhxhmpt1uwv7f09szl73tpjwdntnvosrl5jh6jtsqdqxvjfveyckvidtc.min.js"></script>
+<script src="/assets/js/script-zlbfwhnmde0hpeh30x8vqdycn8y7d5owg9gd56v5kettuixda4snfgdvwecg.min.js"></script>
 
 <!--SCRIPTS END-->
 
